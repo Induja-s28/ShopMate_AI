@@ -3,6 +3,7 @@ import pandas as pd
 from groq import Groq
 from dotenv import load_dotenv
 import os
+import mysql.connector
 
 load_dotenv()
 
@@ -14,8 +15,33 @@ def get_groq_client():
 
 @st.cache_data
 def load_products():
-    return pd.read_csv("products.csv")
+    connection = mysql.connector.connect(
+        host=os.getenv("MYSQL_HOST"),
+        user=os.getenv("MYSQL_USER"),
+        password=os.getenv("MYSQL_PASSWORD"),
+        database=os.getenv("MYSQL_DATABASE")
+    )
 
+    query = """
+    SELECT
+        name,
+        category,
+        price,
+        rating,
+        ram,
+        storage,
+        processor,
+        battery,
+        description
+    FROM products
+    """
+
+    products_df = pd.read_sql(query, connection)
+    connection.close()
+
+    return products_df
+
+products = load_products()
 client = get_groq_client()
 products = load_products()
 st.set_page_config(
